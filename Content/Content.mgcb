@@ -1,0 +1,13 @@
+#-----------------------------
+# MonoGame Content Pipeline
+#-----------------------------
+
+/outputDir:bin/Content
+/intermediateDir:obj/Content
+/targetPlatform:DesktopGL
+/compress:False
+
+#begin Fonts/DefaultFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/build:Fonts/DefaultFont.spritefont
