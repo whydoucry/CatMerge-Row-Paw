@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using CatMergeRowPaw.Controllers;
 
 namespace CatMergeRowPaw.Views
 {
@@ -9,14 +10,19 @@ namespace CatMergeRowPaw.Views
         private readonly Texture2D _pixel;
         private readonly TextRenderer _textRenderer;
 
-        public Rectangle MatchBoardRect { get; } = new Rectangle(240, 40, 480, 480);
+        public Rectangle MatchBoardRect { get; } = new Rectangle(240, 90, 480, 430);
         public Rectangle MergeBoardRect { get; } = new Rectangle(280, 80, 400, 400);
+        public Rectangle InventoryPanelRect { get; } = new Rectangle(280, 480, 80, 80);
         public Rectangle MenuCatRect { get; } = new Rectangle(360, 80, 240, 240);
-        public Rectangle MatchButtonRect { get; } = new Rectangle(320, 300, 320, 70);
-        public Rectangle MergeButtonRect { get; } = new Rectangle(320, 380, 320, 70);
-        public Rectangle SettingsButtonRect { get; } = new Rectangle(320, 460, 320, 70);
+        public Rectangle MatchButtonRect { get; } = new Rectangle(320, 180, 320, 70);
+        public Rectangle MergeButtonRect { get; } = new Rectangle(320, 270, 320, 70);
+        public Rectangle SettingsButtonRect { get; } = new Rectangle(320, 360, 320, 70);
         public Rectangle BackButtonRect { get; } = new Rectangle(20, 20, 160, 50);
         public Rectangle LevelCompleteRect { get; } = new Rectangle(220, 200, 520, 180);
+        public Rectangle LevelCompletePanelRect { get; } = new Rectangle(320, 120, 320, 320);
+        public Rectangle LevelNextRect { get; } = new Rectangle(360, 220, 240, 60);
+        public Rectangle LevelMenuRect { get; } = new Rectangle(360, 290, 240, 60);
+        public Rectangle LevelExitRect { get; } = new Rectangle(360, 360, 240, 60);
         public Rectangle PauseContinueRect { get; } = new Rectangle(380, 200, 200, 50);
         public Rectangle PauseMenuRect { get; } = new Rectangle(380, 270, 200, 50);
         public Rectangle PauseExitRect { get; } = new Rectangle(380, 340, 200, 50);
@@ -29,7 +35,7 @@ namespace CatMergeRowPaw.Views
             _textRenderer = textRenderer;
         }
 
-        public void Draw(GameMode mode, Controllers.Match3Controller match3, Controllers.MergeController merge, Controllers.GameController controller, Point? selectedMatchCell, Point? selectedMergeCell, bool levelComplete, bool hasCatReward, bool isPaused)
+        public void Draw(GameMode mode, Match3Controller match3, Controllers.MergeController merge, Controllers.GameController controller, Point? selectedMatchCell, Point? selectedMergeCell, bool levelComplete, bool hasCatReward, bool isPaused)
         {
             if (mode == GameMode.Menu)
             {
@@ -41,7 +47,7 @@ namespace CatMergeRowPaw.Views
             }
             else if (mode == GameMode.Merge)
             {
-                DrawMergeBoard(merge, selectedMergeCell);
+                DrawMergeBoard(merge, selectedMergeCell, controller);
             }
             else if (mode == GameMode.Settings)
             {
@@ -55,13 +61,13 @@ namespace CatMergeRowPaw.Views
         }
 
 
-        private void DrawMergeBoard(Controllers.MergeController merge, Point? selectedCell)
+        private void DrawMergeBoard(Controllers.MergeController merge, Point? selectedCell, Controllers.GameController controller)
         {
             DrawRectangle(new Rectangle(0, 0, 960, 560), new Color(30, 30, 60));
             DrawRectangle(BackButtonRect, new Color(80, 80, 120));
             DrawBorder(BackButtonRect, Color.White);
             DrawText("Меню", new Vector2(BackButtonRect.X + 14, BackButtonRect.Y + 12), Color.White);
-            DrawText("Merge поле", new Vector2(520, 10), Color.White);
+            DrawCenteredTitle("Песочное поле", 10, Color.White);
 
             DrawRectangle(MergeBoardRect, Color.Black);
             var board = merge.Board;
@@ -78,7 +84,7 @@ namespace CatMergeRowPaw.Views
                         cellWidth - 4,
                         cellHeight - 4);
 
-                    var baseColor = board.IsOpenCell[x, y] ? new Color(180, 220, 180) : new Color(120, 120, 120);
+                    var baseColor = GetMergeCellColor(board, x, y);
                     DrawRectangle(cellRect, baseColor);
 
                     if (board.Cats[x, y] != null)
@@ -99,35 +105,79 @@ namespace CatMergeRowPaw.Views
                     }
                 }
             }
+
+            DrawInventoryPanel(controller);
+        }
+
+        private Color GetMergeCellColor(Board board, int x, int y)
+        {
+            if (board.IsOpenCell[x, y])
+            {
+                return new Color(120, 80, 40);
+            }
+
+            return new Color(225, 205, 170);
+        }
+
+        private void DrawInventoryPanel(Controllers.GameController controller)
+        {
+            DrawRectangle(InventoryPanelRect, new Color(70, 70, 90));
+            DrawBorder(InventoryPanelRect, Color.White);
+            DrawText("Котики", new Vector2(InventoryPanelRect.X + 8, InventoryPanelRect.Y + 8), Color.White);
+
+            var iconSize = 14;
+            var iconSpacing = 18;
+            var startX = InventoryPanelRect.X + 8;
+            var startY = InventoryPanelRect.Y + 30;
+            var drawCount = System.Math.Min(9, controller.CatInventory.Count);
+
+            for (var i = 0; i < drawCount; i++)
+            {
+                var iconRect = new Rectangle(startX + (i % 3) * iconSpacing, startY + (i / 3) * iconSpacing, iconSize, iconSize);
+                DrawRectangle(iconRect, controller.CatInventory[i].GetColor());
+                DrawBorder(iconRect, Color.White);
+            }
+
+            DrawText(controller.UnplacedCatCount.ToString(), new Vector2(InventoryPanelRect.X + InventoryPanelRect.Width - 24, InventoryPanelRect.Y + InventoryPanelRect.Height - 24), Color.White);
         }
 
         private void DrawMenu(bool hasCatReward)
         {
             DrawRectangle(new Rectangle(0, 0, 960, 560), new Color(40, 40, 80));
-            DrawText("Cat Merge Row Paw", new Vector2(300, 20), Color.White);
-            DrawRectangle(MenuCatRect, new Color(220, 180, 180));
-            DrawBorder(MenuCatRect, Color.White);
-            DrawText("Ваш кот", new Vector2(MenuCatRect.X + 40, MenuCatRect.Y + MenuCatRect.Height + 10), Color.White);
+            DrawCenteredTitle("Cat Merge Row Paw", 100, Color.White);
 
             DrawRectangle(MatchButtonRect, new Color(80, 80, 120));
             DrawBorder(MatchButtonRect, Color.White);
-            DrawText("Три в ряд", new Vector2(MatchButtonRect.X + 90, MatchButtonRect.Y + 20), Color.White);
+            DrawCenteredText("Три в ряд", MatchButtonRect, Color.White);
 
             DrawRectangle(MergeButtonRect, new Color(80, 80, 120));
             DrawBorder(MergeButtonRect, Color.White);
-            DrawText("Песочное поле", new Vector2(MergeButtonRect.X + 60, MergeButtonRect.Y + 20), Color.White);
+            DrawCenteredText("Песочное поле", MergeButtonRect, Color.White);
 
             DrawRectangle(SettingsButtonRect, new Color(80, 80, 120));
             DrawBorder(SettingsButtonRect, Color.White);
-            DrawText("Настройки", new Vector2(SettingsButtonRect.X + 90, SettingsButtonRect.Y + 20), Color.White);
+            DrawCenteredText("Настройки", SettingsButtonRect, Color.White);
+        }
 
-            if (hasCatReward)
-            {
-                var badge = new Rectangle(MenuCatRect.X + MenuCatRect.Width - 60, MenuCatRect.Y + 10, 50, 50);
-                DrawRectangle(badge, new Color(220, 240, 120));
-                DrawBorder(badge, Color.White);
-                DrawText("!", new Vector2(badge.X + 18, badge.Y + 8), Color.Black);
-            }
+        private void DrawLevelCompletePanel()
+        {
+            DrawRectangle(new Rectangle(0, 0, 960, 560), new Color(0, 0, 0, 150));
+            DrawRectangle(LevelCompletePanelRect, new Color(220, 200, 120));
+            DrawBorder(LevelCompletePanelRect, Color.White);
+
+            DrawText("Уровень пройден!", new Vector2(LevelCompletePanelRect.X + 40, LevelCompletePanelRect.Y + 40), Color.Black);
+
+            DrawRectangle(LevelNextRect, new Color(80, 80, 120));
+            DrawBorder(LevelNextRect, Color.White);
+            DrawText("Следующий уровень", new Vector2(LevelNextRect.X + 30, LevelNextRect.Y + 18), Color.White);
+
+            DrawRectangle(LevelMenuRect, new Color(80, 80, 120));
+            DrawBorder(LevelMenuRect, Color.White);
+            DrawText("Вернуться в меню", new Vector2(LevelMenuRect.X + 30, LevelMenuRect.Y + 18), Color.White);
+
+            DrawRectangle(LevelExitRect, new Color(80, 80, 120));
+            DrawBorder(LevelExitRect, Color.White);
+            DrawText("Выйти из игры", new Vector2(LevelExitRect.X + 60, LevelExitRect.Y + 18), Color.White);
         }
 
         private void DrawSettings(Controllers.GameController controller)
@@ -144,15 +194,30 @@ namespace CatMergeRowPaw.Views
             DrawText("Назад", new Vector2(BackButtonRect.X + 14, BackButtonRect.Y + 12), Color.White);
         }
 
-        private void DrawMatchBoard(Controllers.Match3Controller match3, Point? selectedCell, bool levelComplete, IEnumerable<Controllers.TileAnimation> animatingTiles)
+        private void DrawMatchBoard(Match3Controller match3, Point? selectedCell, bool levelComplete, IEnumerable<Controllers.TileAnimation> animatingTiles)
         {
             DrawRectangle(new Rectangle(0, 0, 960, 560), new Color(20, 20, 50));
             DrawRectangle(BackButtonRect, new Color(80, 80, 120));
             DrawBorder(BackButtonRect, Color.White);
             DrawText("Меню", new Vector2(BackButtonRect.X + 14, BackButtonRect.Y + 12), Color.White);
-            DrawText($"Уровень {match3.CurrentLevel}", new Vector2(520, 10), Color.White);
-            DrawText($"Матчи: {match3.MatchesMade}/{match3.MatchesRequired}", new Vector2(520, 40), Color.White);
-            DrawText($"Счет: {match3.Score}", new Vector2(520, 70), Color.White);
+
+            var infoPanelWidth = 560;
+            var infoPanelHeight = 32;
+            var infoPanelX = (960 - infoPanelWidth) / 2;
+            var infoPanelY = 10;
+            var levelPanel = new Rectangle(infoPanelX, infoPanelY, infoPanelWidth / 2 - 6, infoPanelHeight);
+            var remainingPanel = new Rectangle(infoPanelX + infoPanelWidth / 2 + 6, infoPanelY, infoPanelWidth / 2 - 6, infoPanelHeight);
+
+            DrawRectangle(levelPanel, new Color(60, 60, 100));
+            DrawBorder(levelPanel, Color.White);
+            DrawCenteredText($"Уровень {match3.CurrentLevel}", levelPanel, Color.White);
+
+            DrawRectangle(remainingPanel, new Color(60, 60, 100));
+            DrawBorder(remainingPanel, Color.White);
+            DrawCenteredText($"Осталось {match3.MatchesRequired - match3.MatchesMade} комбинаций", remainingPanel, Color.White);
+
+            var scoreRect = new Rectangle(infoPanelX, infoPanelY + infoPanelHeight + 10, infoPanelWidth, 24);
+            DrawCenteredText($"Счет: {match3.Score}", scoreRect, Color.White);
 
             var board = match3.Board;
             DrawRectangle(MatchBoardRect, Color.Black);
@@ -194,24 +259,6 @@ namespace CatMergeRowPaw.Views
                 }
             }
 
-            // Draw animating tiles
-            foreach (var anim in animatingTiles)
-            {
-                if (anim.Tile != null)
-                {
-                    var color = anim.Tile.Color;
-                    var tileColor = GetTileColor(color);
-                    var rect = new Rectangle((int)(anim.Position.X - cellWidth / 2), (int)(anim.Position.Y - cellHeight / 2), (int)cellWidth - 4, (int)cellHeight - 4);
-                    DrawRectangle(rect, tileColor);
-                    DrawBorder(rect, Color.White);
-                    if (anim.Tile.IsSand)
-                    {
-                        var sandColor = new Color(210, 180, 140, 180);
-                        DrawRectangle(rect, sandColor);
-                    }
-                }
-            }
-
             if (levelComplete && match3.CurrentLevel == 1)
             {
                 DrawRectangle(LevelCompleteRect, new Color(0, 0, 0, 180));
@@ -221,11 +268,29 @@ namespace CatMergeRowPaw.Views
                 DrawText("Уровень пройден!", new Vector2(inner.X + 70, inner.Y + 40), Color.Black);
                 DrawText("Вернитесь в меню и переходите в Merge.", new Vector2(inner.X + 40, inner.Y + 90), Color.Black);
             }
+            else if (levelComplete && match3.CurrentLevel > 1)
+            {
+                DrawLevelCompletePanel();
+            }
         }
 
         private void DrawText(string text, Vector2 position, Color color)
         {
             var texture = _textRenderer.GetTextTexture(text, color);
+            _spriteBatch.Draw(texture, position, Color.White);
+        }
+
+        private void DrawCenteredText(string text, Rectangle rect, Color color)
+        {
+            var texture = _textRenderer.GetTextTexture(text, color);
+            var position = new Vector2(rect.X + (rect.Width - texture.Width) / 2, rect.Y + (rect.Height - texture.Height) / 2);
+            _spriteBatch.Draw(texture, position, Color.White);
+        }
+
+        private void DrawCenteredTitle(string text, int topY, Color color)
+        {
+            var texture = _textRenderer.GetTextTexture(text, color);
+            var position = new Vector2((960 - texture.Width) / 2, topY);
             _spriteBatch.Draw(texture, position, Color.White);
         }
 

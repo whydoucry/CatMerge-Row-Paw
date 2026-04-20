@@ -14,9 +14,16 @@ namespace CatMergeRowPaw
                 for (var x = 0; x < board.Width; x++)
                 {
                     board.Cats[x, y] = null;
-                    board.IsOpenCell[x, y] = (x + y) % 2 == 0;
+                    board.IsOpenCell[x, y] = IsInitialOpenCell(board, x, y);
                 }
             }
+        }
+
+        private static bool IsInitialOpenCell(Board board, int x, int y)
+        {
+            var bottomRow = board.Height - 1;
+            var secondRow = board.Height - 2;
+            return y == bottomRow || (y == secondRow && x > 0 && x < board.Width - 1);
         }
 
         public bool AddCat(Board board, Cat cat)
@@ -26,7 +33,7 @@ namespace CatMergeRowPaw
             {
                 for (var x = 0; x < board.Width; x++)
                 {
-                    if (board.Cats[x, y] == null)
+                    if (board.Cats[x, y] == null && board.IsOpenCell[x, y])
                     {
                         emptySlots.Add(new Point(x, y));
                     }
@@ -70,7 +77,39 @@ namespace CatMergeRowPaw
             var targetCat = board.Cats[target.X, target.Y]!;
             board.Cats[source.X, source.Y] = null;
             board.Cats[target.X, target.Y] = targetCat.Upgrade();
+
+            ExpandBrownZone(board, source);
+            ExpandBrownZone(board, target);
             return true;
+        }
+
+        private void ExpandBrownZone(Board board, Point center)
+        {
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                for (var dx = -1; dx <= 1; dx++)
+                {
+                    if (dx == 0 && dy == 0)
+                    {
+                        continue;
+                    }
+
+                    var x = center.X + dx;
+                    var y = center.Y + dy;
+                    if (!board.IsInside(x, y))
+                    {
+                        continue;
+                    }
+
+                    if (board.IsOpenCell[x, y] || board.Cats[x, y] != null)
+                    {
+                        continue;
+                    }
+
+                    board.IsOpenCell[x, y] = true;
+                    board.Cats[x, y] = new Cat(1);
+                }
+            }
         }
     }
 }

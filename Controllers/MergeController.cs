@@ -9,7 +9,7 @@ namespace CatMergeRowPaw.Controllers
 
         public MergeController()
         {
-            Board = new Board(5, 5);
+            Board = new Board(10, 10);
             _mergeSystem = new MergeSystem();
         }
 

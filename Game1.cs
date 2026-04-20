@@ -59,7 +59,7 @@ namespace CatMergeRowPaw
             _pixel = new Texture2D(GraphicsDevice, 1, 1);
             _pixel.SetData(new[] { Color.White });
             _textRenderer = new TextRenderer(GraphicsDevice);
-            _view = new GameView(_spriteBatch, _pixel, _textRenderer!);
+            _view = new GameView(_spriteBatch, _pixel, _textRenderer);
             _controller.Match3.CellHeight = _view.MatchBoardRect.Height / 8f;
         }
 
@@ -104,6 +104,58 @@ namespace CatMergeRowPaw
                     else if (_view.SettingsButtonRect.Contains(scaledPos))
                     {
                         _controller.GoToSettings();
+                    }
+                }
+                else if (_controller.CurrentMode == GameMode.Match3)
+                {
+                    if (_controller.Match3.IsLevelComplete() && _controller.Match3.CurrentLevel > 1)
+                    {
+                        if (_view.LevelNextRect.Contains(scaledPos))
+                        {
+                            _controller.GoToMatch3();
+                        }
+                        else if (_view.LevelMenuRect.Contains(scaledPos) || _view.BackButtonRect.Contains(scaledPos))
+                        {
+                            _controller.GoToMenu();
+                        }
+                        else if (_view.LevelExitRect.Contains(scaledPos))
+                        {
+                            Exit();
+                        }
+                    }
+                    else
+                    {
+                        if (_view.BackButtonRect.Contains(scaledPos))
+                        {
+                            _controller.GoToMenu();
+                        }
+                        else
+                        {
+                            var cell = GetCellAtPoint(scaledPos, _view.MatchBoardRect, _controller.Match3.Board.Width, _controller.Match3.Board.Height);
+                            if (cell.HasValue)
+                            {
+                                _controller.HandleClick(cell.Value);
+                            }
+                        }
+                    }
+                }
+                else if (_controller.CurrentMode == GameMode.Merge)
+                {
+                    if (_view.BackButtonRect.Contains(scaledPos))
+                    {
+                        _controller.GoToMenu();
+                    }
+                    else if (_view.InventoryPanelRect.Contains(scaledPos))
+                    {
+                        _controller.TryPlaceNextInventoryCat();
+                    }
+                    else
+                    {
+                        var cell = GetCellAtPoint(scaledPos, _view.MergeBoardRect, _controller.Merge.Board.Width, _controller.Merge.Board.Height);
+                        if (cell.HasValue)
+                        {
+                            _controller.HandleClick(cell.Value);
+                        }
                     }
                 }
                 else if (_controller.CurrentMode == GameMode.Settings)
@@ -178,7 +230,7 @@ namespace CatMergeRowPaw
                 return;
             }
 
-            _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null, Matrix.CreateScale(_scaleX, _scaleY));
+            _spriteBatch.Begin(SpriteSortMode.Deferred, null, null, null, null, null, Matrix.CreateScale(_scaleX, _scaleY, 1f));
             _view.Draw(_controller.CurrentMode, _controller.Match3, _controller.Merge, _controller, _controller.SelectedMatchCell, _controller.SelectedMergeCell, _controller.Match3.IsLevelComplete(), _controller.HasCatReward, _controller.IsPaused);
             _spriteBatch.End();
             base.Draw(gameTime);

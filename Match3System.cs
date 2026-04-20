@@ -101,6 +101,11 @@ namespace CatMergeRowPaw
         public HashSet<Point> ResolveMatches(Board board)
         {
             var allMatches = new HashSet<Point>();
+            if (IsLevelComplete())
+            {
+                return allMatches;
+            }
+
             var matches = FindMatches(board);
             if (!matches.Any())
             {
